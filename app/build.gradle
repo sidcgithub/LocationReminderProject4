@@ -1,0 +1,156 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: "androidx.navigation.safeargs.kotlin"
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+
+android {
+    compileSdkVersion 32
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        applicationId "com.udacity.project4"
+        minSdkVersion 26
+        targetSdkVersion 32
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        Properties properties = new Properties()
+
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+        manifestPlaceholders = [MAPS_API_KEY: "${properties.getProperty('MAPS_API_KEY')}"]
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    testOptions.unitTests {
+        includeAndroidResources = true
+        returnDefaultValues = true
+    }
+    testOptions {
+        animationsDisabled = true
+    }
+
+    //dataBinding {
+    //    enabled = true
+    //    enabledForTests = true
+    //}
+    buildFeatures {
+        dataBinding true
+        viewBinding true
+    }
+
+
+
+}
+
+
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // App dependencies
+    implementation "androidx.appcompat:appcompat:1.5.1"
+    implementation "androidx.legacy:legacy-support-v4:$androidXLegacySupport"
+    implementation "androidx.annotation:annotation:1.5.0"
+
+    implementation "androidx.cardview:cardview:$cardVersion"
+    implementation "com.google.android.material:material:1.6.1"
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+
+    implementation 'com.google.code.gson:gson:2.8.9'
+
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:30.4.1')
+    implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
+
+    // Analytics
+    implementation 'com.google.firebase:firebase-analytics'
+
+    // Architecture Components
+    //Navigation dependencies
+    implementation 'androidx.appcompat:appcompat:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha04'
+    implementation 'androidx.test.uiautomator:uiautomator:2.2.0'
+    implementation 'androidx.navigation:navigation-testing:2.5.3'
+    kapt "androidx.lifecycle:lifecycle-compiler:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-extensions:$archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.5.1"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.5.2"
+    implementation "androidx.navigation:navigation-ui-ktx:2.5.2"
+    implementation "androidx.test.espresso:espresso-idling-resource:3.4.0"
+
+    //Room dependencies
+    implementation("androidx.room:room-ktx:2.4.3")
+    implementation("androidx.room:room-runtime:2.4.3")
+    kapt "androidx.room:room-compiler:2.4.3"
+
+    //Coroutines Dependencies
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
+
+    //Koin
+    implementation "io.insert-koin:koin-android:$koinVersion"
+
+
+    // Dependencies for local unit tests
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
+    testImplementation "androidx.arch.core:core-testing:2.1.0"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "com.google.truth:truth:$truthVersion"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
+
+    // AndroidX Test - JVM testing
+    testImplementation "androidx.test:core-ktx:1.4.0"
+    testImplementation "androidx.test.ext:junit-ktx:1.1.3"
+    testImplementation "androidx.test:rules:1.4.0"
+
+    // AndroidX Test - Instrumented testing
+    androidTestImplementation "androidx.test:core-ktx:1.4.0"
+    androidTestImplementation "androidx.test.ext:junit-ktx:1.1.3"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
+    androidTestImplementation "androidx.test:rules:1.4.0"
+    androidTestImplementation "androidx.room:room-testing:2.4.3"
+    androidTestImplementation "androidx.arch.core:core-testing:2.1.0"
+    androidTestImplementation "org.robolectric:annotations:$robolectricVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:3.5.1"
+    androidTestImplementation "androidx.test.espresso:espresso-intents:3.5.1"
+    androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:3.5.1"
+    androidTestImplementation "junit:junit:$junitVersion"
+    // Once https://issuetracker.google.com/127986458 is fixed this can be testImplementation
+    debugImplementation "androidx.fragment:fragment-testing:1.5.5"
+    implementation "androidx.test:core:1.5.0"
+    implementation "androidx.fragment:fragment:1.5.5"
+    androidTestImplementation "org.mockito:mockito-core:$mockitoVersion"
+    androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:2.28.3"
+    androidTestImplementation('io.insert-koin:koin-test-junit4:3.2.1') { exclude group: 'org.mockito' }
+
+
+
+    //Maps & Geofencing
+    implementation "com.google.android.gms:play-services-location:20.0.0"
+    implementation "com.google.android.gms:play-services-maps:18.1.0"
+
+
+}

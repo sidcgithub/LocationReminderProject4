@@ -1,18 +1,23 @@
 package com.udacity.project4.locationreminders.savereminder
 
+import android.Manifest
+import android.annotation.TargetApi
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -27,6 +32,11 @@ class SaveReminderFragment : BaseFragment() {
 
     companion object {
         const val ACTION_GEOFENCE_EVENT = "action-geofence-event"
+        const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 200
+        const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 201
+
+        private const val LOCATION_PERMISSION_INDEX = 0
+        private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
     }
     //Get the view model this time as a single to be shared with the another fragment
     override val _viewModel: SaveReminderViewModel by inject()
@@ -44,6 +54,65 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
     lateinit var geofencingClient: GeofencingClient
+
+    private val runningQOrLater = android.os.Build.VERSION.SDK_INT >=
+            android.os.Build.VERSION_CODES.Q
+
+    @TargetApi(29)
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        return foregroundLocationApproved() && backgroundPermissionApproved()
+    }
+    fun foregroundLocationApproved() :Boolean = (
+            PackageManager.PERMISSION_GRANTED ==
+                    ActivityCompat.checkSelfPermission(requireActivity(),
+                        Manifest.permission.ACCESS_FINE_LOCATION))
+
+    fun  backgroundPermissionApproved() : Boolean =
+        if (runningQOrLater) {
+            PackageManager.PERMISSION_GRANTED ==
+                    ActivityCompat.checkSelfPermission(
+                        requireActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    )
+        } else {
+            true
+        }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+
+        if (
+            grantResults.isEmpty() ||
+            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED))
+        {
+            _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+
+        }
+    }
+
+    @TargetApi(29 )
+    private fun requestForegroundAndBackgroundLocationPermissions() {
+        if (foregroundAndBackgroundLocationPermissionApproved())
+            return
+        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        val resultCode = when {
+            runningQOrLater -> {
+                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+            }
+            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        }
+        ActivityCompat.requestPermissions(
+            this.requireActivity(),
+            permissionsArray,
+            resultCode
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,8 +135,13 @@ class SaveReminderFragment : BaseFragment() {
         binding.lifecycleOwner = this
         binding.selectLocation.setOnClickListener {
             //            Navigate to another fragment to get the user location
-            _viewModel.navigationCommand.value =
-                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+            requestForegroundAndBackgroundLocationPermissions()
+            if(foregroundLocationApproved()) {
+                _viewModel.navigationCommand.postValue(
+                    NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment()))
+            } else {
+                _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+            }
         }
 
         binding.saveReminder.setOnClickListener {
@@ -110,7 +184,11 @@ class SaveReminderFragment : BaseFragment() {
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL)
             .addGeofence(geofence)
             .build()
-        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
+        if(backgroundPermissionApproved()) {
+            geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
+        } else {
+            _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+        }
 
     }
 

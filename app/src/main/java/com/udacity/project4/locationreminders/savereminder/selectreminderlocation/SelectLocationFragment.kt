@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.view.*
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.*
@@ -31,7 +32,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 
     companion object {
-        private const val PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 100
         private const val TAG = "SelectLocationFragment"
     }
 
@@ -100,28 +100,32 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         return binding.root
     }
 
-    val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Do if the permission is granted
-            getLocation()
-            getCurrentLocation()
-        } else {
-            // Do otherwise
-            Toast.makeText(
-                requireContext(),
-                "Please enable location permissions",
-                Toast.LENGTH_SHORT
-            ).show()
+    private fun checkLocationPermissions(): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return false
         }
+        return true
     }
 
-    private fun getCurrentLocation() {
-        location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-        currentLocation = LatLng(location?.latitude ?: 0.0, location?.longitude ?: 0.0)
-        mMap.addMarker(MarkerOptions().position(currentLocation).title("My current Location"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+   private fun getCurrentLocation() {
+
+       if(!checkLocationPermissions()) {
+           return
+       }
+       else {
+
+           location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+           currentLocation = LatLng(location?.latitude ?: 0.0, location?.longitude ?: 0.0)
+           mMap.addMarker(MarkerOptions().position(currentLocation).title("My current Location"))
+           mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+       }
     }
 
     private fun onLocationSelected() {
@@ -190,34 +194,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
 
-    fun getLocation(): Boolean {
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            return false
-        }
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-            return false
-        }
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            return false
-        }
+    private fun getLocation(): Boolean {
+        return if(!checkLocationPermissions())
+            false
+        else {
 
             locationManager.requestLocationUpdates(
                 LocationManager.NETWORK_PROVIDER,
@@ -225,7 +205,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 0f,
                 locationListener
             )
-            return true
+            true
+        }
 
     }
 

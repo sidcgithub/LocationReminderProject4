@@ -21,6 +21,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
+import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
@@ -39,6 +40,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var latlng:LatLng? =null
 
     private lateinit var mMap: GoogleMap
+    private lateinit var coolMapStyle: MapStyleOptions
     private lateinit var locationManager: LocationManager
     private lateinit var locationListener: LocationListener
     private var location: Location? = null
@@ -76,7 +78,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
 
         locationManager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
-        locationListener = LocationListener { }
+        locationListener = object: LocationListener {
+            override fun onLocationChanged(location: Location) {
+
+            }
+
+            override fun onProviderEnabled(provider: String) {
+                super.onProviderEnabled(provider)
+            }
+
+            override fun onProviderDisabled(provider: String) {
+                super.onProviderDisabled(provider)
+                _viewModel.navigationCommand.postValue(NavigationCommand.Back)
+            }
+        }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = childFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
@@ -106,7 +121,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         currentLocation = LatLng(location?.latitude ?: 0.0, location?.longitude ?: 0.0)
         mMap.addMarker(MarkerOptions().position(currentLocation).title("My current Location"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
     }
 
     private fun onLocationSelected() {
@@ -134,33 +149,39 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         inflater.inflate(R.menu.map_options, menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
-        R.id.normal_map -> {
-            mMap.mapType = GoogleMap.MAP_TYPE_NORMAL
-            true
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        mMap.setMapStyle(null)
+        return when (item.itemId) {
+
+            R.id.normal_map -> {
+                mMap.mapType = GoogleMap.MAP_TYPE_NORMAL
+                true
+            }
+            R.id.hybrid_map -> {
+                mMap.mapType = GoogleMap.MAP_TYPE_HYBRID
+                true
+            }
+            R.id.satellite_map -> {
+                mMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
+                true
+            }
+            R.id.terrain_map -> {
+                mMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
+                true
+            }
+            R.id.cool_map -> {
+                mMap.setMapStyle(coolMapStyle)
+                true
+            }
+            else -> {
+                false
+            }
         }
-        R.id.hybrid_map -> {
-            mMap.mapType = GoogleMap.MAP_TYPE_HYBRID
-            true
-        }
-        R.id.satellite_map -> {
-            mMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
-            true
-        }
-        R.id.terrain_map -> {
-            mMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
-            true
-        }
-        R.id.cool_map -> {
-            mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(),R.raw.cool_style))
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        coolMapStyle = MapStyleOptions.loadRawResourceStyle(requireContext(),R.raw.cool_style)
         if (getLocation()) {
             getCurrentLocation()
             setPoiClick(mMap)
@@ -234,6 +255,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             poiMarker?.showInfoWindow()
         }
     }
+
+
 
 
 }

@@ -84,11 +84,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             }
 
             override fun onProviderEnabled(provider: String) {
-                super.onProviderEnabled(provider)
             }
 
             override fun onProviderDisabled(provider: String) {
-                super.onProviderDisabled(provider)
                 _viewModel.navigationCommand.postValue(NavigationCommand.Back)
             }
         }

@@ -6,30 +6,36 @@ import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 //Use FakeDataSource that acts as a test double to the LocalDataSource
-class FakeDataSource(val remindersList: MutableList<ReminderDTO> = mutableListOf()) : ReminderDataSource {
+class FakeDataSource(var remindersList: MutableList<ReminderDTO> = mutableListOf()) :
+    ReminderDataSource {
 
-//    TODO: Create a fake data source to act as a double to the real data source
+
+    //    TODO: Create a fake data source to act as a double to the real data source
+    var shouldReturnError = false
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
-        delay(1000)
-        return Result.Success(remindersList)
+        return if (shouldReturnError) {
+            Result.Error("Failed to get reminders")
+        } else {
+            Result.Success(remindersList)
+        }
     }
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
-        delay(500)
         remindersList.add(reminder)
     }
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
-        delay(500)
-        return Result.Success(remindersList.first { it.id == id })
+        val reminder = remindersList.find { it.id == id }
+        return if (reminder != null) {
+            Result.Success(reminder)
+        } else {
+            Result.Error("Reminder not found")
+        }
     }
 
     override suspend fun deleteAllReminders() {
-        delay(500)
         remindersList.clear()
 
     }
-
-
 }

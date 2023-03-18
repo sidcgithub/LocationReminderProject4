@@ -44,21 +44,18 @@ class GeofenceTransitionsJobIntentService() : JobIntentService(), CoroutineScope
             val geofencingEvent = GeofencingEvent.fromIntent(intent)
 
             if (geofencingEvent != null) {
+
                 if (geofencingEvent.hasError()) {
                     Toast.makeText(applicationContext, "There was an error ${geofencingEvent.errorCode}", Toast.LENGTH_SHORT).show()
                     return
                 } else {
                     if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER || geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
-
-                        val fenceId = when {
-                            geofencingEvent.triggeringGeofences?.isNotEmpty() == true ->
-                                geofencingEvent.triggeringGeofences?.get(0)?.requestId
-                            else -> {
-                                return
+                        if(geofencingEvent.triggeringGeofences?.isNotEmpty() == true)
+                        {
+                            geofencingEvent.triggeringGeofences!!.forEach {
+                                val fenceId = it.requestId
+                                sendNotification(fenceId)
                             }
-                        }
-                        if (fenceId != null) {
-                            sendNotification(fenceId)
                         }
                     }
                 }

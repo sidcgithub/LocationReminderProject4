@@ -3,19 +3,20 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.TargetApi
 import android.app.PendingIntent
+import android.content.Context
+import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingRequest
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
@@ -55,6 +56,8 @@ class SaveReminderFragment : BaseFragment() {
     }
     lateinit var geofencingClient: GeofencingClient
 
+    private var shouldGoToMap = false
+
     private val runningQOrLater = android.os.Build.VERSION.SDK_INT >=
             android.os.Build.VERSION_CODES.Q
 
@@ -92,6 +95,21 @@ class SaveReminderFragment : BaseFragment() {
         {
             _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
 
+        }
+    }
+
+    private fun checkDeviceLocationSettingsAndStartGeofence(): Boolean {
+        val locationManager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
+
+        return if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            shouldGoToMap = true
+            // Location is enabled
+            true
+        } else {
+            shouldGoToMap = false
+            // Location is disabled
+            _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+            false
         }
     }
 
@@ -136,7 +154,7 @@ class SaveReminderFragment : BaseFragment() {
         binding.selectLocation.setOnClickListener {
             //            Navigate to another fragment to get the user location
             requestForegroundAndBackgroundLocationPermissions()
-            if(foregroundLocationApproved()) {
+            if(foregroundLocationApproved() && checkDeviceLocationSettingsAndStartGeofence()) {
                 _viewModel.navigationCommand.postValue(
                     NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment()))
             } else {
@@ -184,7 +202,7 @@ class SaveReminderFragment : BaseFragment() {
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL)
             .addGeofence(geofence)
             .build()
-        if(backgroundPermissionApproved()) {
+        if(backgroundPermissionApproved() && checkDeviceLocationSettingsAndStartGeofence()) {
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
         } else {
             _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)

@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
@@ -70,6 +71,7 @@ class SaveReminderFragment : BaseFragment() {
                     ActivityCompat.checkSelfPermission(requireActivity(),
                         Manifest.permission.ACCESS_FINE_LOCATION))
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     fun  backgroundPermissionApproved() : Boolean =
         if (runningQOrLater) {
             PackageManager.PERMISSION_GRANTED ==
@@ -108,7 +110,6 @@ class SaveReminderFragment : BaseFragment() {
         } else {
             shouldGoToMap = false
             // Location is disabled
-            _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
             false
         }
     }
@@ -154,7 +155,8 @@ class SaveReminderFragment : BaseFragment() {
         binding.selectLocation.setOnClickListener {
             //            Navigate to another fragment to get the user location
             requestForegroundAndBackgroundLocationPermissions()
-            if(foregroundLocationApproved() && checkDeviceLocationSettingsAndStartGeofence()) {
+            checkDeviceLocationSettingsAndStartGeofence()
+            if(foregroundLocationApproved() && shouldGoToMap) {
                 _viewModel.navigationCommand.postValue(
                     NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment()))
             } else {
@@ -186,6 +188,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun addGeofence(latlng: LatLng, id: String) {
         val geofence = Geofence.Builder()
             .setRequestId(id)
@@ -202,7 +205,8 @@ class SaveReminderFragment : BaseFragment() {
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL)
             .addGeofence(geofence)
             .build()
-        if(backgroundPermissionApproved() && checkDeviceLocationSettingsAndStartGeofence()) {
+        checkDeviceLocationSettingsAndStartGeofence()
+        if(backgroundPermissionApproved() && shouldGoToMap) {
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
         } else {
             _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)

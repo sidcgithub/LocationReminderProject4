@@ -13,7 +13,7 @@ abstract class BaseViewModel(app: Application) : AndroidViewModel(app) {
     val navigationCommand: SingleLiveEvent<NavigationCommand> = SingleLiveEvent()
     val showErrorMessage: MutableLiveData<String> = MutableLiveData()
     val showSnackBar: MutableLiveData<String> = MutableLiveData()
-    val showSnackBarInt: MutableLiveData<Int> = MutableLiveData()
+    val showSnackBarInt: SingleLiveEvent<Int> = SingleLiveEvent()
     val showToast: MutableLiveData<String> = MutableLiveData()
     val showLoading: MutableLiveData<Boolean> = MutableLiveData()
     val showNoData: MutableLiveData<Boolean> = MutableLiveData()

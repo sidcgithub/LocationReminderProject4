@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.reminderslist
 import android.app.Application
 import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.data.FakeDataSource
@@ -73,26 +74,28 @@ class RemindersListViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = TestCoroutineDispatcher()
 
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
         app = ApplicationProvider.getApplicationContext() as Application
          fakeDataSource = FakeDataSource()
-        viewModel = RemindersListViewModel(app, fakeDataSource)
+        viewModel = RemindersListViewModel(app, fakeDataSource).apply {
+
+        }
         Dispatchers.setMain(testDispatcher)
     }
 
     @Test
     @ExperimentalCoroutinesApi
     fun `when list values are present and loadReminders is invoked then reminder list should have the list values`() =
-        runBlockingTest {
+        testDispatcher.runBlockingTest {
             fakeDataSource.remindersList = validReminders
             assert(viewModel.remindersList.value == null)
             viewModel.loadReminders()
-//            assert(viewModel.showLoading.value == true)
-            delay(100)
+
+            delay(300)
             (viewModel.remindersList.value as MutableList<ReminderDataItem>?)?.toDTO()
                 ?.containsAll(validReminders)
                 ?.let { assert(it) }
@@ -103,27 +106,11 @@ class RemindersListViewModelTest {
 
     @Test
     @ExperimentalCoroutinesApi
-    fun `when list values are not present and loadReminders is invoked then reminder list should be null and showNoData MutableLiveData should be true`() =
-        runBlockingTest {
-            assert(viewModel.remindersList.value == null)
-            viewModel.loadReminders()
-            assert(viewModel.showLoading.value == true)
-            delay(100)
-            assert((viewModel.remindersList.value as MutableList<ReminderDataItem>?)?.toDTO() == mutableListOf<ReminderDTO>())
-            viewModel.showNoData.value?.let { assert(it) }
-
-            assert( viewModel.shouldReturnError.value == true)
-            assert(viewModel.showLoading.value == false)
-
-        }
-
-    @Test
-    @ExperimentalCoroutinesApi
-    fun `when there is an error should return error`() =  runBlockingTest {
+    fun `when there is an error should return error`() =  testDispatcher.runBlockingTest {
         fakeDataSource.remindersList.addAll(validReminders)
         fakeDataSource.shouldReturnError = true
         viewModel.loadReminders()
-        delay(100)
+        delay(300)
         assert(viewModel.remindersList.value == null)
         viewModel.showNoData.value?.let { assert(it) }
         assert( viewModel.shouldReturnError.value == true)

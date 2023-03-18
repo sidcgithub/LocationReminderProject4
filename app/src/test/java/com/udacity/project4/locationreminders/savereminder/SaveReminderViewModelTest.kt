@@ -16,11 +16,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.robolectric.annotation.Config
 import java.util.*
 import kotlin.random.Random
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
+@Config(sdk = [29])
 class SaveReminderViewModelTest {
 
     val validReminderItem = ReminderDataItem(

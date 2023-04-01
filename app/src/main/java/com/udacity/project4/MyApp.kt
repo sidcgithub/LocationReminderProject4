@@ -6,6 +6,8 @@ import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
@@ -21,11 +23,9 @@ class MyApp : Application() {
          */
         val myModule = module {
             //Declare a ViewModel - be later inject into Fragment with dedicated injector using by viewModel()
+            single<DispatcherProvider> { DefaultDispatcherProvider() }
             viewModel {
-                RemindersListViewModel(
-                    get(),
-                    get() as ReminderDataSource
-                )
+                RemindersListViewModel(get(), get() as ReminderDataSource, get() as DispatcherProvider)
             }
             //Declare singleton definitions to be later injected using by inject()
             single {
@@ -37,6 +37,7 @@ class MyApp : Application() {
             }
             single { RemindersLocalRepository(get()) as ReminderDataSource }
             single { LocalDB.createRemindersDao(this@MyApp) }
+
         }
 
         startKoin {
@@ -45,3 +46,16 @@ class MyApp : Application() {
         }
     }
 }
+
+interface DispatcherProvider {
+    fun default(): CoroutineDispatcher
+    fun io(): CoroutineDispatcher
+    fun main(): CoroutineDispatcher
+}
+
+class DefaultDispatcherProvider : DispatcherProvider {
+    override fun default() = Dispatchers.Default
+    override fun io() = Dispatchers.IO
+    override fun main() = Dispatchers.Main
+}
+

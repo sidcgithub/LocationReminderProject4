@@ -18,14 +18,12 @@ package com.udacity.project4.util
 import android.view.View
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.IdlingResource
-import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.locationreminders.reminderslist.ReminderListFragment
-import java.util.UUID
+import java.util.*
 
 /**
  * An espresso idling resource implementation that reports idle status for all data binding

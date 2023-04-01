@@ -15,16 +15,8 @@
  */
 package com.udacity.project4.locationreminders.data
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.map
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
-import com.udacity.project4.locationreminders.data.local.RemindersDao
-
-import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
-import kotlinx.coroutines.runBlocking
-import java.util.LinkedHashMap
 
 /**
  * Implementation of a remote data source with static access to the data for easy testing.

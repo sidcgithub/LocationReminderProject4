@@ -1,19 +1,22 @@
-package com.udacity.project4.locationreminders.data
+package com.udacity.project4.locationreminders.data.local
 
+import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 //Use FakeDataSource that acts as a test double to the LocalDataSource
-class FakeDataSource(var remindersList: MutableList<ReminderDTO> = mutableListOf()) :
+public class FakeDataSource(    var remindersList: MutableList<ReminderDTO> = mutableListOf()) :
     ReminderDataSource {
+
+
 
 
     //    TODO: Create a fake data source to act as a double to the real data source
     var shouldReturnError = false
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
+        delay(100)
         return if (shouldReturnError) {
             Result.Error("Failed to get reminders")
         } else {
@@ -22,10 +25,14 @@ class FakeDataSource(var remindersList: MutableList<ReminderDTO> = mutableListOf
     }
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
+        delay(100)
+
         remindersList.add(reminder)
     }
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
+        delay(100)
+
         val reminder = remindersList.find { it.id == id }
         return if (reminder != null) {
             Result.Success(reminder)
@@ -35,6 +42,8 @@ class FakeDataSource(var remindersList: MutableList<ReminderDTO> = mutableListOf
     }
 
     override suspend fun deleteAllReminders() {
+        delay(100)
+
         remindersList.clear()
 
     }

@@ -1,14 +1,7 @@
 package com.udacity.project4
 
-import android.app.Activity
 import android.app.Application
-import android.content.Context
-import android.util.DisplayMetrics
-import android.view.View
-import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
 import androidx.test.core.app.ActivityScenario
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.onView
@@ -22,7 +15,6 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread
-import androidx.test.platform.app.InstrumentationRegistry
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
@@ -33,7 +25,6 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.DisableAnimationsRule
 import com.udacity.project4.util.monitorActivity
-import kotlinx.android.synthetic.main.activity_reminders.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.*
@@ -77,7 +68,8 @@ class RemindersActivityTest :
             viewModel {
                 RemindersListViewModel(
                     appContext,
-                    get() as ReminderDataSource
+                    get() as ReminderDataSource,
+                    get()
                 )
             }
             single {
@@ -86,6 +78,7 @@ class RemindersActivityTest :
                     get() as ReminderDataSource
                 )
             }
+            single<DispatcherProvider> { DefaultDispatcherProvider() }
             single { RemindersLocalRepository(get()) as ReminderDataSource }
             single { LocalDB.createRemindersDao(appContext) }
         }

@@ -1,39 +1,25 @@
 package com.udacity.project4.locationreminders.reminderslist
 
 import android.app.Application
-import android.content.Context
 import android.os.Bundle
-import androidx.core.graphics.scaleMatrix
-import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
-import androidx.navigation.testing.TestNavHostController
-import androidx.recyclerview.widget.RecyclerView
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.IdlingRegistry
-import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions
-import androidx.test.espresso.contrib.RecyclerViewActions
-import androidx.test.espresso.intent.VerificationMode
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.udacity.project4.DefaultDispatcherProvider
+import com.udacity.project4.DispatcherProvider
 import com.udacity.project4.R
-import com.udacity.project4.base.BaseFragment
-import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.locationreminders.data.FakeAndroidTestRepository
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
-import com.udacity.project4.locationreminders.data.local.LocalDB
-import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
-import com.udacity.project4.util.DataBindingIdlingResource
-import com.udacity.project4.util.monitorFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -46,10 +32,8 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import org.koin.java.KoinJavaComponent.get
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import java.lang.Thread.sleep
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -76,9 +60,13 @@ class ReminderListFragmentTest {
             viewModel {
                 RemindersListViewModel(
                     appContext,
-                    repository
+                    repository,
+                    get()
                 )
             }
+
+            single<DispatcherProvider> { DefaultDispatcherProvider() }
+
             single {
                 SaveReminderViewModel(
                     appContext,

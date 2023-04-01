@@ -1,8 +1,8 @@
 package com.udacity.project4.utils
 
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.LiveData
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 
 /**
  * This class observes the current FirebaseUser. If there is no logged in user, FirebaseUser will

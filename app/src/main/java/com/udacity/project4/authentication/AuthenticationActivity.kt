@@ -2,11 +2,8 @@ package com.udacity.project4.authentication
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Color.GREEN
-import android.graphics.Color.RED
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil

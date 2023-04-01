@@ -1,19 +1,8 @@
 package com.udacity.project4.locationreminders.geofence
 
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.content.ContextCompat
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingEvent
-import com.udacity.project4.locationreminders.data.ReminderDataSource
-import com.udacity.project4.locationreminders.data.dto.Result
-import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment.Companion.ACTION_GEOFENCE_EVENT
-import com.udacity.project4.utils.sendNotification
-import kotlinx.coroutines.runBlocking
-import org.koin.java.KoinJavaComponent.inject
 
 /**
  * Triggered by the Geofence.  Since we can have many Geofences at once, we pull the request

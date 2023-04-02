@@ -129,10 +129,12 @@ class RemindersListViewModelTest() : KoinTest {
         fakeDataSource.shouldReturnError = true
 
         viewModel.executeLoadReminders()
+        assert(viewModel.showLoading.value == true)
         assert(viewModel.remindersList.value == mutableListOf<ReminderDataItem>())
         advanceUntilIdle()
 
         assert(viewModel.shouldReturnError.value == true)
+        assert(viewModel.showLoading.value == false)
     }
 
     @Test

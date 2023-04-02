@@ -20,7 +20,7 @@ import kotlin.random.Random
 @RunWith(AndroidJUnit4::class)
 class SaveReminderViewModelTest {
 
-    val validReminderItem = ReminderDataItem(
+    private val validReminderItem = ReminderDataItem(
         "reminder",
         "This is a reminder",
         "Toronto",
@@ -28,7 +28,7 @@ class SaveReminderViewModelTest {
         Random.nextDouble(0.0, 90.0),
     )
 
-    val invalidReminderItem = ReminderDataItem(
+    private val invalidReminderItem = ReminderDataItem(
         null,
         "Description",
         "Toronto",

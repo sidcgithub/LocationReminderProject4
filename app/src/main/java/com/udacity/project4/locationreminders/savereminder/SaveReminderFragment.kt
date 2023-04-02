@@ -191,7 +191,7 @@ class SaveReminderFragment : BaseFragment() {
         )
 
         if (_viewModel.validateEnteredData(reminderData)) {
-            if (addGeofence(LatLng(_viewModel.latitude.value!!, _viewModel.longitude.value!!), reminderData.id)) {
+            if (_viewModel.ignorePermissionChecks || addGeofence(LatLng(_viewModel.latitude.value!!, _viewModel.longitude.value!!), reminderData.id)) {
                 _viewModel.saveReminder(reminderData)
                 _viewModel.navigationCommand.value = NavigationCommand.Back
                 _viewModel.showToast.value = requireActivity().getString(R.string.reminder_saved)

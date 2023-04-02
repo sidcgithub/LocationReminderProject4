@@ -3,13 +3,16 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.content.Context.LOCATION_SERVICE
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.view.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -19,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
+import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -26,6 +30,7 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -46,7 +51,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
    var  currentMapType: Int = 0
 
     //Use Koin to get the view model of the SaveReminder
-    override val _viewModel: SaveReminderViewModel by inject()
+    override val _viewModel: SaveReminderViewModel by sharedViewModel()
     private lateinit var binding: FragmentSelectLocationBinding
 
     override fun onCreateView(
@@ -73,7 +78,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 //        TODO: call this function after the user confirms on the selected location
         binding.setLocation.setOnClickListener { onLocationSelected()
-            requireActivity().onBackPressed()
+            _viewModel.navigationCommand.postValue(NavigationCommand.Back)
         }
 
         locationManager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
@@ -86,7 +91,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             }
 
             override fun onProviderDisabled(provider: String) {
-                _viewModel.navigationCommand.postValue(NavigationCommand.Back)
             }
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -95,6 +99,45 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         return binding.root
+    }
+
+    private fun enableMyLocation() {
+        if (foregroundLocationApproved()) {
+            mMap.isMyLocationEnabled = true
+        } else {
+            requestForegroundLocationPermission()
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        requestForegroundLocationPermission()
+    }
+
+    private fun foregroundLocationApproved(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        ) {
+        } else {
+            _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+        }
+    }
+    private fun requestForegroundLocationPermission() {
+        if (foregroundLocationApproved()) {
+            return
+        }
+
+        val permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        requestPermissionLauncher.launch(permissionsArray)
     }
 
     private fun checkLocationPermissions(): Boolean {
@@ -111,18 +154,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         return true
     }
 
-   private fun getCurrentLocation() {
-
-       if(!checkLocationPermissions()) {
-           return
-       }
-       else {
-
-           location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-           currentLocation = LatLng(location?.latitude ?: 0.0, location?.longitude ?: 0.0)
-           mMap.addMarker(MarkerOptions().position(currentLocation).title("My current Location"))
-           mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
-       }
+    private fun getCurrentLocation() {
+        if (!checkLocationPermissions()) {
+            return
+        } else {
+            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            if (location != null) {
+                currentLocation = LatLng(location?.latitude ?: 0.0, location?.longitude ?: 0.0)
+            } else {
+                currentLocation = LatLng(37.4219999, -122.0840575)
+                _viewModel.showSnackBarInt.postValue(R.string.err_currentLocation)
+            }
+            mMap.addMarker(MarkerOptions().position(currentLocation).title("My current Location"))
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+        }
     }
 
     private fun onLocationSelected() {
@@ -188,6 +233,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             setPoiClick(mMap)
             setLocationClick(mMap)
         }
+        enableMyLocation()
     }
 
 

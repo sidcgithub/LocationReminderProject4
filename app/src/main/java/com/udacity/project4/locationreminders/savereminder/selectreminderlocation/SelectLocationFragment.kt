@@ -90,33 +90,39 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
 
         locationManager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        val mapFragment = childFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
         locationListener =
 
             object: LocationListener {
                 override fun onLocationChanged(location: Location) {
-                    if(currentLocation == firstLocaton || (!foregroundLocationApproved() && currentLocation == null)) {
+
+                    if(currentLocation == firstLocaton ) {
                         currentLocation = LatLng(location.latitude, location.longitude)
                         mMap.clear()
                         mMap.addMarker(
                             MarkerOptions().position(currentLocation).title("My current Location")
                         )
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+
                         enableMyLocation()
+
                     }
                 }
 
                 override fun onProviderEnabled(provider: String) {
+                    enableMyLocation()
                 }
 
                 override fun onProviderDisabled(provider: String) {
+                    enableMyLocation()
 
                 }
 
-        }
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = childFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+            }
 
         return binding.root
     }
@@ -131,14 +137,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        requestForegroundLocationPermission()
+
+
     }
 
     private fun foregroundLocationApproved(): Boolean {
         return ContextCompat.checkSelfPermission(
-            requireContext(),
+            requireActivity(),
             Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+        ) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
@@ -243,6 +250,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+
+        requestForegroundLocationPermission()
         coolMapStyle = MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.cool_style)
         getLocation()
         setPoiClick(mMap)

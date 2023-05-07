@@ -46,6 +46,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private var currentLocation: LatLng = LatLng(37.4219999, -122.0840575)
+    private var firstLocaton: LatLng = currentLocation
     private var poi: PointOfInterest? = null
     private var latlng: LatLng? = null
 
@@ -93,12 +94,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
             object: LocationListener {
                 override fun onLocationChanged(location: Location) {
-                    currentLocation = LatLng(location.latitude, location.longitude)
-                    mMap.clear()
-                    mMap.addMarker(
-                        MarkerOptions().position(currentLocation).title("My current Location")
-                    )
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+                    if(currentLocation == firstLocaton || (!foregroundLocationApproved() && currentLocation == null)) {
+                        currentLocation = LatLng(location.latitude, location.longitude)
+                        mMap.clear()
+                        mMap.addMarker(
+                            MarkerOptions().position(currentLocation).title("My current Location")
+                        )
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+                        enableMyLocation()
+                    }
                 }
 
                 override fun onProviderEnabled(provider: String) {
@@ -157,6 +161,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun requestForegroundLocationPermission() {
         if (foregroundLocationApproved()) {
+            enableMyLocation()
             return
         }
 
@@ -242,8 +247,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         getLocation()
         setPoiClick(mMap)
         setLocationClick(mMap)
-
         enableMyLocation()
+
     }
 
 

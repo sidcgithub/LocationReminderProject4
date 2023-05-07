@@ -4,16 +4,22 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 import android.Manifest
 import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -39,16 +45,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         private const val TAG = "SelectLocationFragment"
     }
 
-    private var currentLocation: LatLng = LatLng(0.0,0.0)
+    private var currentLocation: LatLng = LatLng(37.4219999, -122.0840575)
     private var poi: PointOfInterest? = null
-    private var latlng:LatLng? =null
+    private var latlng: LatLng? = null
 
     private lateinit var mMap: GoogleMap
     private lateinit var coolMapStyle: MapStyleOptions
     private lateinit var locationManager: LocationManager
     private lateinit var locationListener: LocationListener
     private var location: Location? = null
-   var  currentMapType: Int = 0
+    var currentMapType: Int = 0
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by sharedViewModel()
@@ -77,21 +83,31 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 
 //        TODO: call this function after the user confirms on the selected location
-        binding.setLocation.setOnClickListener { onLocationSelected()
+        binding.setLocation.setOnClickListener {
+            onLocationSelected()
             _viewModel.navigationCommand.postValue(NavigationCommand.Back)
         }
 
         locationManager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
-        locationListener = object: LocationListener {
-            override fun onLocationChanged(location: Location) {
+        locationListener =
 
-            }
+            object: LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    currentLocation = LatLng(location.latitude, location.longitude)
+                    mMap.clear()
+                    mMap.addMarker(
+                        MarkerOptions().position(currentLocation).title("My current Location")
+                    )
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
+                }
 
-            override fun onProviderEnabled(provider: String) {
-            }
+                override fun onProviderEnabled(provider: String) {
+                }
 
-            override fun onProviderDisabled(provider: String) {
-            }
+                override fun onProviderDisabled(provider: String) {
+
+                }
+
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = childFragmentManager
@@ -123,20 +139,31 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
-    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
-            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        ) {
-        } else {
-            _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            ) {
+                getLocation()
+                setLocationClick(mMap)
+                setPoiClick(mMap)
+
+            } else {
+                _viewModel.showSnackBarInt.postValue(R.string.permission_denied_explanation)
+            }
         }
-    }
+
+
     private fun requestForegroundLocationPermission() {
         if (foregroundLocationApproved()) {
             return
         }
 
-        val permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        val permissionsArray = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
         requestPermissionLauncher.launch(permissionsArray)
     }
 
@@ -154,22 +181,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         return true
     }
 
-    private fun getCurrentLocation() {
-        if (!checkLocationPermissions()) {
-            return
-        } else {
-            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-            if (location != null) {
-                currentLocation = LatLng(location?.latitude ?: 0.0, location?.longitude ?: 0.0)
-            } else {
-                currentLocation = LatLng(37.4219999, -122.0840575)
-                _viewModel.showSnackBarInt.postValue(R.string.err_currentLocation)
-            }
-            mMap.addMarker(MarkerOptions().position(currentLocation).title("My current Location"))
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f))
-        }
-    }
-
     private fun onLocationSelected() {
         //        TODO: When the user confirms on the selected location,
         //         send back the selected location details to the view model
@@ -181,7 +192,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             _viewModel.selectedPOI.postValue(pointOfInterest)
             _viewModel.reminderSelectedLocationStr.postValue(it.name)
 
-        }?: run {
+        } ?: run {
             _viewModel.longitude.postValue(this.latlng?.longitude ?: 0.0)
             _viewModel.latitude.postValue(this.latlng?.latitude ?: 0.0)
             _viewModel.selectedPOI.postValue(null)
@@ -227,18 +238,17 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        coolMapStyle = MapStyleOptions.loadRawResourceStyle(requireContext(),R.raw.cool_style)
-        if (getLocation()) {
-            getCurrentLocation()
-            setPoiClick(mMap)
-            setLocationClick(mMap)
-        }
+        coolMapStyle = MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.cool_style)
+        getLocation()
+        setPoiClick(mMap)
+        setLocationClick(mMap)
+
         enableMyLocation()
     }
 
 
     private fun getLocation(): Boolean {
-        return if(!checkLocationPermissions())
+        return if (!checkLocationPermissions())
             false
         else {
 
@@ -266,6 +276,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             poiMarker?.showInfoWindow()
         }
     }
+
     private fun setLocationClick(map: GoogleMap) {
         map.setOnMapClickListener { latlng ->
             this@SelectLocationFragment.poi = null
@@ -279,8 +290,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             poiMarker?.showInfoWindow()
         }
     }
-
-
 
 
 }

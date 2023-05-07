@@ -43,12 +43,6 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity
-            android:name=".map.ReminderMapsActivity"
-            android:exported="true"
-            android:label="Current Location" >
-
-        </activity>
         <activity android:name=".locationreminders.ReminderDescriptionActivity" />
         <activity
             android:name=".authentication.AuthenticationActivity"
